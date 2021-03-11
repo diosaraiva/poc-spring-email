@@ -24,6 +24,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<io.springfox.version>3.0.0</io.springfox.version>
+		<javax.mail.version>1.6.2</javax.mail.version>
 	</properties>
 
 	<dependencies>
@@ -53,6 +54,13 @@
 			<artifactId>springfox-boot-starter</artifactId>
 			<version>${io.springfox.version}</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/javax.mail/javax.mail-api -->
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>javax.mail-api</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
