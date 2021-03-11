@@ -12,6 +12,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -26,7 +27,8 @@ import io.swagger.annotations.ApiOperation;
 @Api(tags = "PoC E-mail")
 public class EmailController 
 {
-	/*REFERENCIAS: 
+	/*
+	REFERENCIAS: 
 	https://mkyong.com/spring-boot/spring-boot-how-to-send-email-via-smtp/
 	https://stackoverflow.com/questions/46663/how-can-i-send-an-email-by-java-application-using-gmail-yahoo-or-hotmail
 	*/
@@ -36,7 +38,7 @@ public class EmailController
 	@RequestMapping(value= "/emailTls", 
 	method = RequestMethod.GET,
 	produces= {MediaType.APPLICATION_JSON_VALUE})
-	public void enviarEmailSmtpTls(Email email)
+	public ResponseEntity<String> enviarEmailSmtpTls(Email email)
 	{
 		final String username = email.getRemetente();
 		final String password = email.getSenhaRemetente();
@@ -55,7 +57,7 @@ public class EmailController
 			}
 		});
 		session.setDebug(true);
-
+		
 		try 
 		{
 			String recipients = String.join(",", email.getDestinatarios());
@@ -74,13 +76,13 @@ public class EmailController
 			message.setText(email.getMensagem());
 
 			Transport.send(message);
-
-			System.out.println("Done");
-		} 
+		}
 		catch (MessagingException e) 
 		{
 			e.printStackTrace();
 		}
+		
+		return ResponseEntity.ok("");
 	}
 
 	@Deprecated
@@ -91,8 +93,9 @@ public class EmailController
 	produces= {MediaType.APPLICATION_JSON_VALUE})
 	public void enviarEmailSmtpTls2(Email email)
 	{
-		Properties props = System.getProperties();
 		String host = "smtp.gmail.com";
+		
+		Properties props = System.getProperties();
 		props.put("mail.smtp.starttls.enable", "true");
 		props.put("mail.smtp.host", host);
 		props.put("mail.smtp.user", email.getRemetente());
@@ -101,6 +104,7 @@ public class EmailController
 		props.put("mail.smtp.auth", "true");
 
 		Session session = Session.getDefaultInstance(props);
+		
 		MimeMessage message = new MimeMessage(session);
 
 		try {
@@ -117,7 +121,9 @@ public class EmailController
 			}
 
 			message.setSubject(email.getAssunto());
+			
 			message.setText(email.getMensagem());
+			
 			Transport transport = session.getTransport("smtp");
 			transport.connect(host, email.getRemetente(), email.getSenhaRemetente());
 			transport.sendMessage(message, message.getAllRecipients());
@@ -133,13 +139,12 @@ public class EmailController
 		}
 	}
 
-	@Deprecated
 	@ResponseBody
 	@ApiOperation(value = "Envia E-mail por SSL.")
 	@RequestMapping(value= "/emailSsl", 
 	method = RequestMethod.GET,
 	produces= {MediaType.APPLICATION_JSON_VALUE})
-	public void enviarEmailSmtpSsl()
+	public void enviarEmailSmtpSsl(Email email)
 	{
 		final String username = "username@gmail.com";
 		final String password = "password";
@@ -179,8 +184,8 @@ public class EmailController
 			Transport.send(message);
 
 			System.out.println("Done");
-
-		} catch (MessagingException e) 
+		}
+		catch (MessagingException e) 
 		{
 			e.printStackTrace();
 		}
