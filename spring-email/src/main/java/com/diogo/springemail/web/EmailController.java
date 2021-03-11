@@ -7,6 +7,7 @@ import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
+import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
@@ -25,6 +26,11 @@ import io.swagger.annotations.ApiOperation;
 @Api(tags = "PoC E-mail")
 public class EmailController 
 {
+	/*REFERENCIAS: 
+	https://mkyong.com/spring-boot/spring-boot-how-to-send-email-via-smtp/
+	https://stackoverflow.com/questions/46663/how-can-i-send-an-email-by-java-application-using-gmail-yahoo-or-hotmail
+	*/
+
 	@ResponseBody
 	@ApiOperation(value = "Envia E-mail por TLS.")
 	@RequestMapping(value= "/emailTls", 
@@ -48,21 +54,22 @@ public class EmailController
 				return new PasswordAuthentication(username, password);
 			}
 		});
+		session.setDebug(true);
 
 		try 
 		{
 			String recipients = String.join(",", email.getDestinatarios());
-			
+
 			Message message = new MimeMessage(session);
 
-			message.setFrom(new InternetAddress(email.getRemetente()));
+			message.setFrom(new InternetAddress(username));
 
 			message.setRecipients(
 					Message.RecipientType.TO,
 					InternetAddress.parse(recipients)
 					);
 
-			message.setSubject("Testing Gmail TLS");
+			message.setSubject(email.getAssunto());
 
 			message.setText(email.getMensagem());
 
@@ -76,6 +83,57 @@ public class EmailController
 		}
 	}
 
+	@Deprecated
+	@ResponseBody
+	@ApiOperation(value = "Envia E-mail por TLS.")
+	@RequestMapping(value= "/emailTls2", 
+	method = RequestMethod.GET,
+	produces= {MediaType.APPLICATION_JSON_VALUE})
+	public void enviarEmailSmtpTls2(Email email)
+	{
+		Properties props = System.getProperties();
+		String host = "smtp.gmail.com";
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", host);
+		props.put("mail.smtp.user", email.getRemetente());
+		props.put("mail.smtp.password", email.getSenhaRemetente());
+		props.put("mail.smtp.port", "587");
+		props.put("mail.smtp.auth", "true");
+
+		Session session = Session.getDefaultInstance(props);
+		MimeMessage message = new MimeMessage(session);
+
+		try {
+			message.setFrom(new InternetAddress(email.getRemetente()));
+			InternetAddress[] toAddress = new InternetAddress[email.getDestinatarios().length];
+
+			// To get the array of addresses
+			for( int i = 0; i < email.getDestinatarios().length; i++ ) {
+				toAddress[i] = new InternetAddress(email.getDestinatarios()[i]);
+			}
+
+			for( int i = 0; i < toAddress.length; i++) {
+				message.addRecipient(Message.RecipientType.TO, toAddress[i]);
+			}
+
+			message.setSubject(email.getAssunto());
+			message.setText(email.getMensagem());
+			Transport transport = session.getTransport("smtp");
+			transport.connect(host, email.getRemetente(), email.getSenhaRemetente());
+			transport.sendMessage(message, message.getAllRecipients());
+			transport.close();
+		}
+		catch (AddressException ae) 
+		{
+			ae.printStackTrace();
+		}
+		catch (MessagingException me) 
+		{
+			me.printStackTrace();
+		}
+	}
+
+	@Deprecated
 	@ResponseBody
 	@ApiOperation(value = "Envia E-mail por SSL.")
 	@RequestMapping(value= "/emailSsl", 
